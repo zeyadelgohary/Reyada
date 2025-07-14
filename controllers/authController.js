@@ -26,7 +26,7 @@ module.exports.register = asyncHandler(async (req, res) => {
   const newUser = new User({
     email: email,
     userName: req.body.userName,
-    password: req.body.password, // plain text for now
+    password: req.body.password,
     isAdmin: false,
   });
 
