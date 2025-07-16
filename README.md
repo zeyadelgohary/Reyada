@@ -2,6 +2,52 @@
 
 A Node.js and Express REST API for managing CRM contacts, integrated with Bitrix24 and MongoDB. Designed to support a website frontend built with React.
 
+## Project Structure
+
+```
+├── app.js                 # Application entry point
+├── config/
+│   └── db.js             # Database configuration
+├── controllers/
+│   ├── authController.js  # Authentication logic
+│   └── contactController.js # Contact management logic
+├── models/
+│   ├── Contact.js        # Contact model schema
+│   └── User.js           # User model schema
+├── routes/
+│   ├── auth.js           # Authentication routes
+│   └── contacts.js       # Contact management routes
+└── package.json          # Project dependencies
+```
+
+## System Architecture
+
+The application follows a typical MVC (Model-View-Controller) architecture:
+
+1. **Models**: Define data schemas using Mongoose
+   - User model for authentication
+   - Contact model for CRM data
+
+2. **Controllers**: Handle business logic
+   - Authentication (register, login)
+   - Contact management (fetch, list, add)
+
+3. **Routes**: Define API endpoints
+   - Authentication routes
+   - Contact management routes
+
+## Core Components
+
+### 1. Server Configuration (app.js)
+- Express server setup with CORS support
+- MongoDB connection
+- Route registration
+- Environment variable configuration
+
+### 2. Database Connection (config/db.js)
+- MongoDB connection using Mongoose
+- Connection error handling
+- Environment-based configuration
 
 ## Features
 
@@ -111,14 +157,91 @@ Adds a new contact directly into the MongoDB database.
 
 ## Technologies Used
 
-- Node.js
-- Express.js
-- MongoDB
-- Mongoose
-- Axios
-- dotenv
-- cors
-- bcryptjs
-- JSON Web Token (JWT)
+### Core Technologies
+- **Node.js**: Runtime environment
+- **Express.js**: Web application framework
+- **MongoDB**: NoSQL database
+- **Mongoose**: MongoDB object modeling
+
+### Security & Authentication
+- **bcryptjs**: Password hashing
+- **JSON Web Token (JWT)**: Authentication tokens
+
+### Utilities & Middleware
+- **Axios**: HTTP client for API requests
+- **dotenv**: Environment variable management
+- **cors**: Cross-Origin Resource Sharing
+- **express-async-handler**: Async error handling
+- **joi**: Data validation
+- **joi-password-complexity**: Password validation
+
+### Development Tools
+- **nodemon**: Development server with auto-reload
+
+## Environment Variables
+
+The application uses the following environment variables:
+```env
+PORT=5000               # Application port
+MODE_ENV=development    # Environment mode
+MONGO_URI=mongodb://localhost:27017/Reyada  # MongoDB connection string
+```
+
+## Getting Started
+
+1. **Clone the repository**
+```bash
+git clone https://github.com/yourusername/Reyada.git
+cd Reyada
+```
+
+2. **Install dependencies**
+```bash
+npm install
+```
+
+3. **Set up environment variables**
+- Create a `.env` file in the root directory
+- Add the required environment variables
+
+4. **Start the development server**
+```bash
+npm start
+```
+
+## Error Handling
+
+The application implements comprehensive error handling:
+- Request validation errors (400)
+- Authentication errors (401)
+- Server errors (500)
+- Database connection errors
+
+## Security Measures
+
+1. **Password Security**
+   - Passwords are hashed using bcrypt
+   - Password complexity requirements enforced
+
+2. **CORS Configuration**
+   - Restricted to specific origins:
+     - localhost:3000
+     - ngrok tunnel for development
+
+3. **Input Validation**
+   - All requests validated using Joi
+   - Sanitized MongoDB queries
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## License
+
+This project is proprietary and confidential.
 
 ---
