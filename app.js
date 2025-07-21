@@ -22,7 +22,7 @@ connectDB();
 
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/contacts", require("./routes/contacts"));
-
+app.use("/api/deals", require("./routes/deals"));
 const PORT = process.env.PORT;
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

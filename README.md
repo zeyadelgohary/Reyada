@@ -10,13 +10,16 @@ A Node.js and Express REST API for managing CRM contacts, integrated with Bitrix
 │   └── db.js             # Database configuration
 ├── controllers/
 │   ├── authController.js  # Authentication logic
-│   └── contactController.js # Contact management logic
+│   ├── contactController.js # Contact management logic
+│   └── dealsController.js   # Deals management logic
 ├── models/
 │   ├── Contact.js        # Contact model schema
+│   ├── Deal.js           # Deal model schema
 │   └── User.js           # User model schema
 ├── routes/
 │   ├── auth.js           # Authentication routes
-│   └── contacts.js       # Contact management routes
+│   ├── contacts.js       # Contact management routes
+│   └── deals.js          # Deals management routes
 └── package.json          # Project dependencies
 ```
 
@@ -27,14 +30,17 @@ The application follows a typical MVC (Model-View-Controller) architecture:
 1. **Models**: Define data schemas using Mongoose
    - User model for authentication
    - Contact model for CRM data
+   - Deal model for managing deals
 
 2. **Controllers**: Handle business logic
    - Authentication (register, login)
    - Contact management (fetch, list, add)
+   - Deals management (fetch from Bitrix24, list)
 
 3. **Routes**: Define API endpoints
    - Authentication routes
    - Contact management routes
+   - Deals management routes
 
 ## Core Components
 
@@ -65,6 +71,15 @@ The application follows a typical MVC (Model-View-Controller) architecture:
 
 - **Add New Contact**
   - Allows adding new contact records directly into the MongoDB database via a POST API endpoint.
+
+- **Fetch and Save Deals from Bitrix24**
+  - Integrates with the Bitrix24 REST API to fetch CRM deal data
+  - Filters deals by specific stage ID and selected fields
+  - Stores fetched deals in MongoDB for persistent access
+
+- **Get All Deals**
+  - Provides an API endpoint to retrieve all deals stored in the database
+  - Returns deal data in JSON format with essential fields like ID, title, stage, and opportunity
 
 ## API Endpoints
 
@@ -152,6 +167,47 @@ Adds a new contact directly into the MongoDB database.
       "message": "Contact added successfully."
     }
     ```
+
+---
+
+### GET /api/deals/fetch-bitrix
+
+Fetches deal data from Bitrix24 and saves it to MongoDB.
+
+- **Response:**
+  - Status: 201 Created
+  - Body:
+    ```json
+    {
+      "message": "Deals fetched and saved successfully.",
+      "total": 42
+    }
+    ```
+  - Error Status: 503 Service Unavailable (if Bitrix24 service is unreachable)
+
+---
+
+### GET /api/deals
+
+Retrieves all deals stored in MongoDB.
+
+- **Response:**
+  - Status: 200 OK
+  - Body: Array of deal objects with the following structure:
+    ```json
+    [{
+      "ID": "string",
+      "TITLE": "string",
+      "TYPE_ID": "string",
+      "CATEGORY_ID": "string",
+      "STAGE_ID": "string",
+      "OPPORTUNITY": "string",
+      "IS_MANUAL_OPPORTUNITY": "Y" | "N",
+      "ASSIGNED_BY_ID": "string",
+      "DATE_CREATE": "date"
+    }]
+    ```
+  - Error Status: 500 Internal Server Error
 
 ---
 

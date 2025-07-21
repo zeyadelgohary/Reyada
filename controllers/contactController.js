@@ -22,7 +22,7 @@ exports.fetchAndSaveContacts = async (req, res) => {
     });
   } catch (err) {
     console.error(err.message);
-    res.status(500).json({ error: "Failed to fetch and save contacts." });
+    res.status(503).json({ error: "Failed to fetch and save contacts." });
   }
 };
 
@@ -47,3 +47,4 @@ exports.addContact = async (req, res) => {
     res.status(500).json({ error: "Failed to add contact." });
   }
 }
+   
