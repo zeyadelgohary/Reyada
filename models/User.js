@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema({
   isAdmin: { type: Boolean, default: false },
 });
 
-// Dummy token generator for now
+// Dummy token
 userSchema.methods.generateToken = function () {
   return "mock-token";
 };

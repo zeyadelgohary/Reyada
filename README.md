@@ -1,6 +1,6 @@
 # Reyada CRM
 
-A Node.js and Express REST API for managing CRM contacts, integrated with Bitrix24 and MongoDB. Designed to support a website frontend built with React.
+A Node.js and Express REST API for managing CRM contacts, deals, leads, tasks, expenses, and analytics, integrated with Bitrix24 and MongoDB. Designed to support a website frontend built with React.
 
 ## Project Structure
 
@@ -9,17 +9,28 @@ A Node.js and Express REST API for managing CRM contacts, integrated with Bitrix
 ├── config/
 │   └── db.js             # Database configuration
 ├── controllers/
-│   ├── authController.js  # Authentication logic
-│   ├── contactController.js # Contact management logic
-│   └── dealsController.js   # Deals management logic
+│   ├── authController.js      # Authentication logic
+│   ├── contactController.js   # Contact management logic
+│   ├── dealsController.js     # Deals management logic
+│   ├── analyticsController.js # Analytics and reporting logic
+│   ├── tasksController.js     # Task performance dashboard logic
+│   └── expenseController.js   # Expense management logic
+│   └── summaryController.js   # Main summary dashboard logic
 ├── models/
 │   ├── Contact.js        # Contact model schema
 │   ├── Deal.js           # Deal model schema
+│   ├── Lead.js           # Lead model schema
+│   ├── Task.js           # Task model schema
+│   ├── Expense.js        # Expense model schema
 │   └── User.js           # User model schema
 ├── routes/
 │   ├── auth.js           # Authentication routes
 │   ├── contacts.js       # Contact management routes
-│   └── deals.js          # Deals management routes
+│   ├── deals.js          # Deals management routes
+│   ├── analytics.js      # Analytics routes
+│   ├── tasks.js          # Task dashboard routes
+│   ├── expenses.js       # Expense management routes
+│   └── summary.js        # Main summary dashboard routes
 └── package.json          # Project dependencies
 ```
 
@@ -28,276 +39,287 @@ A Node.js and Express REST API for managing CRM contacts, integrated with Bitrix
 The application follows a typical MVC (Model-View-Controller) architecture:
 
 1. **Models**: Define data schemas using Mongoose
-   - User model for authentication
-   - Contact model for CRM data
-   - Deal model for managing deals
-
-2. **Controllers**: Handle business logic
-   - Authentication (register, login)
-   - Contact management (fetch, list, add)
-   - Deals management (fetch from Bitrix24, list)
-
-3. **Routes**: Define API endpoints
-   - Authentication routes
-   - Contact management routes
-   - Deals management routes
-
-## Core Components
-
-### 1. Server Configuration (app.js)
-- Express server setup with CORS support
-- MongoDB connection
-- Route registration
-- Environment variable configuration
-
-### 2. Database Connection (config/db.js)
-- MongoDB connection using Mongoose
-- Connection error handling
-- Environment-based configuration
+   - User, Contact, Deal, Lead, Task, Expense
+2. **Controllers**: Handle business logic for each module
+3. **Routes**: Define API endpoints for each module
 
 ## Features
 
 - **User Authentication**
-  - Implements user registration and login functionality.
-  - Validates user credentials and handles secure password storage using bcrypt.
+  - Register and login endpoints
+  - Secure password storage
 
-- **Fetch and Save Contacts from Bitrix24**
-  - Integrates with the Bitrix24 REST API to fetch CRM contact data.
-  - Stores fetched contacts in MongoDB for persistent access.
+- **Contact Management**
+  - Fetch contacts from Bitrix24
+  - List and add contacts
 
-- **Get All Contacts**
-  - Provides an API endpoint to retrieve all contacts stored in the database.
-  - Returns data in JSON format suitable for frontend consumption.
+- **Deal Management**
+  - Fetch deals from Bitrix24
+  - List deals
 
-- **Add New Contact**
-  - Allows adding new contact records directly into the MongoDB database via a POST API endpoint.
+- **Lead Management**
+  - Fetch leads from Bitrix24
+  - List leads
 
-- **Fetch and Save Deals from Bitrix24**
-  - Integrates with the Bitrix24 REST API to fetch CRM deal data
-  - Filters deals by specific stage ID and selected fields
-  - Stores fetched deals in MongoDB for persistent access
+- **Analytics Dashboard**
+  - Fetch and analyze leads and deals
+  - Calculate total leads, deals, won deal value, conversion rate
+  - Monthly breakdowns and chart data (pie, line, bar)
 
-- **Get All Deals**
-  - Provides an API endpoint to retrieve all deals stored in the database
-  - Returns deal data in JSON format with essential fields like ID, title, stage, and opportunity
+- **Task Performance Dashboard**
+  - Fetch tasks from Bitrix24
+  - Count total, completed, overdue, pending tasks per user
+  - Calculate completion and overdue percentages
+  - Chart data and summary table per user
+
+- **Expense Management Module**
+  - Add, edit, delete expense records (one name and amount per record)
+  - View history by date
+  - View all expenses, filter by period
+  - Calculate totals by day, month, year, and grand total
+
+- **Main Summary Dashboard**
+  - Combined view: total income (deals), total expenses, net profit
+  - Monthly breakdowns: income, expenses, net profit
+  - Chart data for bar and line charts
+  - Filters: view by month/year, compare months
 
 ## API Endpoints
 
 ### POST /api/auth/register
-
 Registers a new user.
 
-- **Request Body Example:**
-
-    ```json
-    {
-      "email": "john@example.com",
-      "userName": "John Doe",
-      "password": "password123"
-    }
-    ```
-
-- **Response:**
-  - 201 OK - User Created
-  - 400 Bad Request – User Already Registered
-  - Body: Confirmation message and user details
+**Request Body Example:**
+```json
+{
+  "email": "john@example.com",
+  "userName": "John Doe",
+  "password": "password123"
+}
+```
+**Responses:**
+- 201 Created: User registered successfully, returns user details and token
+- 400 Bad Request: Validation error or email already registered
 
 ---
 
 ### POST /api/auth/login
+Authenticates a user and returns a token.
 
-Authenticates an existing user and returns a JWT token.
-
-- **Request Body Example:**
-
-    ```json
-    {
-      "email": "john@example.com",
-      "password": "password123"
-    }
-    ```
-
-- **Response:**
-  - 200 OK - Returns { id, name, userName, isAdmin, token }
-  - 400 Bad Request – invalid email or password
-  - Body: JWT token and user details
+**Request Body Example:**
+```json
+{
+  "email": "john@example.com",
+  "password": "password123"
+}
+```
+**Responses:**
+- 200 OK: Returns user details and token
+- 400 Bad Request: Invalid email or password
 
 ---
 
 ### GET /api/contacts/fetch-bitrix
+Fetches contacts from Bitrix24 and saves to MongoDB.
 
-Fetches contact data from Bitrix24 and saves it to MongoDB.
-
-- **Response:**
-  - Status: 200 OK
-  - Body: JSON array of fetched contacts
+**Request Body:** None
+**Responses:**
+- 201 Created: Contacts fetched and saved successfully
+- 503 Service Unavailable: Failed to fetch and save contacts
 
 ---
 
 ### GET /api/contacts
+Retrieves all contacts.
 
-Retrieves all contacts stored in MongoDB.
-
-- **Response:**
-  - Status: 200 OK
-  - Body: JSON array of contacts
+**Request Body:** None
+**Responses:**
+- 200 OK: Returns array of contacts
+- 500 Internal Server Error: Failed to retrieve contacts
 
 ---
 
-### POST api/contacts/add
+### POST /api/contacts/add
+Adds a new contact.
 
-Adds a new contact directly into the MongoDB database.
-
-- **Request Body Example:**
-
-    ```json
-    {
-      "NAME": "John",
-      "SECOND_NAME": "Michael",
-      "LAST_NAME": "Smith"
-    }
-    ```
-
-- **Response:**
-  - Status: 201 Created
-  - Body:
-
-    ```json
-    {
-      "message": "Contact added successfully."
-    }
-    ```
+**Request Body Example:**
+```json
+{
+  "NAME": "John",
+  "SECOND_NAME": "Michael",
+  "LAST_NAME": "Smith"
+}
+```
+**Responses:**
+- 201 Created: Contact added successfully
+- 500 Internal Server Error: Failed to add contact
 
 ---
 
 ### GET /api/deals/fetch-bitrix
+Fetches deals from Bitrix24 and saves to MongoDB.
 
-Fetches deal data from Bitrix24 and saves it to MongoDB.
-
-- **Response:**
-  - Status: 201 Created
-  - Body:
-    ```json
-    {
-      "message": "Deals fetched and saved successfully.",
-      "total": 42
-    }
-    ```
-  - Error Status: 503 Service Unavailable (if Bitrix24 service is unreachable)
+**Request Body:** None
+**Responses:**
+- 201 Created: Deals fetched and saved successfully
+- 503 Service Unavailable: Failed to fetch and save deals
 
 ---
 
 ### GET /api/deals
+Retrieves all deals.
 
-Retrieves all deals stored in MongoDB.
-
-- **Response:**
-  - Status: 200 OK
-  - Body: Array of deal objects with the following structure:
-    ```json
-    [{
-      "ID": "string",
-      "TITLE": "string",
-      "TYPE_ID": "string",
-      "CATEGORY_ID": "string",
-      "STAGE_ID": "string",
-      "OPPORTUNITY": "string",
-      "IS_MANUAL_OPPORTUNITY": "Y" | "N",
-      "ASSIGNED_BY_ID": "string",
-      "DATE_CREATE": "date"
-    }]
-    ```
-  - Error Status: 500 Internal Server Error
+**Request Body:** None
+**Responses:**
+- 200 OK: Returns array of deals
+- 500 Internal Server Error: Failed to retrieve deals
 
 ---
 
-## Technologies Used
+### GET /api/analytics/fetch-analyze
+Fetches and analyzes leads and deals for dashboard.
 
-### Core Technologies
-- **Node.js**: Runtime environment
-- **Express.js**: Web application framework
-- **MongoDB**: NoSQL database
-- **Mongoose**: MongoDB object modeling
+**Request Body:** None
+**Responses:**
+- 200 OK: Returns analytics data (totals, breakdowns, chart data)
+- 503 Service Unavailable: Failed to fetch and analyze data
 
-### Security & Authentication
-- **bcryptjs**: Password hashing
-- **JSON Web Token (JWT)**: Authentication tokens
+---
 
-### Utilities & Middleware
-- **Axios**: HTTP client for API requests
-- **dotenv**: Environment variable management
-- **cors**: Cross-Origin Resource Sharing
-- **express-async-handler**: Async error handling
-- **joi**: Data validation
-- **joi-password-complexity**: Password validation
+### GET /api/tasks/fetch-analyze
+Fetches and analyzes tasks for performance dashboard.
 
-### Development Tools
-- **nodemon**: Development server with auto-reload
+**Request Body:** None
+**Responses:**
+- 200 OK: Returns task metrics and chart data
+- 503 Service Unavailable: Failed to fetch and analyze tasks
 
-## Environment Variables
+---
 
-The application uses the following environment variables:
-```env
-PORT=5000               # Application port
-MODE_ENV=development    # Environment mode
-MONGO_URI=mongodb://localhost:27017/Reyada  # MongoDB connection string
+### POST /api/expenses/add
+Adds a new expense record.
+
+**Request Body Example:**
+```json
+{
+  "date": "2025-07-31",
+  "period": "monthly",
+  "name": "Rent",
+  "amount": 1200
+}
 ```
+**Responses:**
+- 201 Created: Expense added successfully
+- 400 Bad Request: Failed to add expense
+
+---
+
+### PUT /api/expenses/edit/:id
+Edits an expense record by ID.
+
+**Request Body Example:**
+```json
+{
+  "date": "2025-07-31",
+  "period": "monthly",
+  "name": "Utilities",
+  "amount": 350
+}
+```
+**Responses:**
+- 200 OK: Expense updated successfully
+- 404 Not Found: Expense not found
+- 400 Bad Request: Failed to update expense
+
+---
+
+### DELETE /api/expenses/delete/:id
+Deletes an expense record by ID.
+
+**Request Body:** None
+**Responses:**
+- 200 OK: Expense deleted successfully
+- 404 Not Found: Expense not found
+- 400 Bad Request: Failed to delete expense
+
+---
+
+### GET /api/expenses/by-date?date=YYYY-MM-DD
+Retrieves expenses for a specific date.
+
+**Request Body:** None
+**Responses:**
+- 200 OK: Returns array of expenses for the date
+- 400 Bad Request: Failed to fetch expenses
+
+---
+
+### GET /api/expenses
+Retrieves all expenses (optionally filter by period).
+
+**Request Body:** None
+**Responses:**
+- 200 OK: Returns array of expenses
+- 400 Bad Request: Failed to fetch expenses
+
+---
+
+### GET /api/expenses/totals
+Calculates expense totals by day, month, year, and grand total.
+
+**Request Body:** None
+**Responses:**
+- 200 OK: Returns totals
+- 400 Bad Request: Failed to calculate totals
+
+---
+
+### GET /api/summary/dashboard?month=YYYY-MM&year=YYYY
+Returns main summary dashboard data.
+
+**Request Body:** None
+**Responses:**
+- 200 OK: Returns total income, expenses, net profit, monthly breakdowns, chart data
+- 503 Service Unavailable: Failed to fetch summary dashboard
+
+---
+
+## Technologies & Libraries Used
+
+- express
+- dotenv
+- mongoose
+- cors
+- axios
+- bcrypt
+- bcryptjs
+- express-async-handler
+- express-session
+- joi
+- joi-password-complexity
+- nodemon
 
 ## Getting Started
 
-1. **Clone the repository**
-```bash
-git clone https://github.com/yourusername/Reyada.git
-cd Reyada
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Set up `.env` file with MongoDB URI and other variables
+4. Start the server: `npm start`
+
+## Environment Variables
+
+```
+PORT=5000
+MODE_ENV=development
+MONGO_URI=mongodb://localhost:27017/Reyada
 ```
 
-2. **Install dependencies**
-```bash
-npm install
-```
+## Error Handling & Security
 
-3. **Set up environment variables**
-- Create a `.env` file in the root directory
-- Add the required environment variables
-
-4. **Start the development server**
-```bash
-npm start
-```
-
-## Error Handling
-
-The application implements comprehensive error handling:
-- Request validation errors (400)
-- Authentication errors (401)
-- Server errors (500)
-- Database connection errors
-
-## Security Measures
-
-1. **Password Security**
-   - Passwords are hashed using bcrypt
-   - Password complexity requirements enforced
-
-2. **CORS Configuration**
-   - Restricted to specific origins:
-     - localhost:3000
-     - ngrok tunnel for development
-
-3. **Input Validation**
-   - All requests validated using Joi
-   - Sanitized MongoDB queries
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+- All endpoints have error handling and validation
+- Passwords are hashed
+- CORS is restricted to allowed origins
 
 ## License
 
 This project is proprietary and confidential.
-
----
