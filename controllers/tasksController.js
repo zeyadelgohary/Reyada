@@ -1,4 +1,5 @@
 const axios = require("axios");
+const qs = require("qs");
 const Task = require("../models/Task");
 
 const BITRIX_TASKS_URL = "https://b24-0r8mng.bitrix24.com/rest/1/vww504i93uiu0scn/task.item.list";
@@ -11,17 +12,44 @@ function getStatus(task) {
   return "other";
 }
 
+async function fetchAllTasks() {
+  let allTasks = [];
+  let start = 0;
+  let more = true;
+
+  while (more) {
+    const response = await axios.post(
+      BITRIX_TASKS_URL,
+      qs.stringify({
+        'ORDER[CREATED_DATE]': 'desc',
+        start: start
+      }),
+      {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+      }
+    );
+
+    const batch = response.data.result || [];
+    allTasks = allTasks.concat(batch);
+
+    // If batch size is less than 50, there are no more pages
+    more = batch.length === 50;
+    start += 50;
+  }
+
+  return allTasks;
+}
+
 exports.fetchAndAnalyzeTasks = async (req, res) => {
   try {
-    // Fetch tasks
-    const response = await axios.get(BITRIX_TASKS_URL);
-    const tasks = response.data.result || [];
+    // Fetch all tasks from Bitrix24
+    const tasks = await fetchAllTasks();
 
-    // Save to DB 
+    // Optional: Save tasks to your local DB (replace as needed)
     await Task.deleteMany({});
     await Task.insertMany(tasks);
 
-    // Group by user
+    // Group and analyze tasks per user
     const userStats = {};
     tasks.forEach(task => {
       const userId = task.RESPONSIBLE_ID;
@@ -31,9 +59,10 @@ exports.fetchAndAnalyzeTasks = async (req, res) => {
           completed: 0,
           overdue: 0,
           pending: 0,
-          name: task.RESPONSIBLE_NAME || userId 
+          name: task.RESPONSIBLE_NAME || userId
         };
       }
+
       userStats[userId].total++;
       const status = getStatus(task);
       if (status === "completed") userStats[userId].completed++;
@@ -47,7 +76,7 @@ exports.fetchAndAnalyzeTasks = async (req, res) => {
       stat.overdueRate = stat.total > 0 ? (stat.overdue / stat.total) * 100 : 0;
     });
 
-    // Prepare data for charts and summary
+    // Format for frontend
     const chartData = Object.keys(userStats).map(userId => ({
       userId,
       name: userStats[userId].name,
@@ -57,14 +86,14 @@ exports.fetchAndAnalyzeTasks = async (req, res) => {
       completionRate: userStats[userId].completionRate,
       overdueRate: userStats[userId].overdueRate
     }));
-    const summaryTable = chartData;
 
     res.status(200).json({
       chartData,
-      summaryTable
+      summaryTable: chartData
     });
+
   } catch (err) {
-    console.error(err.message);
+    console.error("Task analysis failed:", err.message);
     res.status(503).json({ error: "Failed to fetch and analyze tasks." });
   }
 };
